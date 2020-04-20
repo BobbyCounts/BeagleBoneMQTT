@@ -8,7 +8,7 @@ $upperBound = $_GET["upperBound"];
 $lowerBound = $_GET["lowerBound"];
 $timezone = $_GET["timezone"];
 
-$con = mysqli_connect('localhost','mqttServer','mariokart','mqttDatabase');   
+$con = mysqli_connect('localhost','mqttServer','USERNAME','PASSWORD');   
 
 $con->query("SET time_zone = '" . $timezone . "'");
 
