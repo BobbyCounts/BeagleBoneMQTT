@@ -1,0 +1,159 @@
+
+<html lang="en">
+
+<head>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.24.0/moment.min.js" integrity="sha256-4iQZ6BVL4qNKlQ27TExEhBN1HFPvAvAMbFavKKosSWQ=" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.3/Chart.bundle.js" integrity="sha256-8zyeSXm+yTvzUN1VgAOinFgaVFEFTyYzWShOy9w7WoQ=" crossorigin="anonymous"></script>
+
+
+
+
+<script>
+var chartData
+var myChart
+var interval
+var hourWindow
+
+function loadChart(){
+	chartData = {
+		type: 'line',
+		data: {
+			datasets: [{
+				label: 'Temperature',
+				data: 0,
+				backgroundColor: 'rgb(0, 191, 255)'
+			}]
+		},
+		options: {
+            responsive: false,
+            scales:     {
+                xAxes: [{
+                    type:       "time",
+					distribution: 'linear',
+                    time:       {
+	
+                    }
+                }],
+            }
+        }
+	}
+
+	var ctx = document.getElementById('myChart');
+	myChart = new Chart(ctx, chartData)
+	sendRequestLive(.1)
+	
+	
+	interval = setInterval(sendRequestLive, 3000,.1)
+
+	//myChart.update()
+}
+
+
+
+
+function refreshChart(data){
+	//clearData()
+	var dataEntries = data.length
+	var i
+	var errorCount = 0
+	if (data == 0){
+		dataSet = 0
+	}else{
+		
+
+		
+		var dataSet = [{x:moment(data[0].Time).local(),y:data[0].Temp}]
+		for (i = 1; i < dataEntries; i++){
+			dataSet = dataSet.concat([{x:moment(data[i].Time).local(),y:data[i].Temp}])
+		}
+		//check for errors
+		for (i = 0; i < dataEntries; i++){
+			if (data[i].CRCSTATUS == '0'){
+				errorCount++
+			}
+		}
+	}
+	myChart.data.datasets[0].data = dataSet
+	myChart.update()
+	
+	
+	document.getElementById("errorDisplay").innerHTML = errorCount.toString()
+	
+	
+}
+
+
+function sendRequestLive(hoursBack){
+	var currentTime = new Date(Date.now())
+	var backTime = new Date(Date.now() - 1000*60*60*hoursBack)
+	var lowerBound = backTime.getFullYear() + "-" + (backTime.getMonth()+1) + "-" + backTime.getDate() + "/" + backTime.getHours() + ":" + backTime.getMinutes() + ":" + backTime.getSeconds()
+	
+	var upperBound = currentTime.getFullYear() + "-" + (currentTime.getMonth()+1) + "-" + currentTime.getDate() + "/" + currentTime.getHours() + ":" + currentTime.getMinutes() + ":" + currentTime.getSeconds()
+	var offset = -currentTime.getTimezoneOffset()//currentTime.getTimezoneOffset()
+	var hours = offset/60
+	var minutes = Math.abs(offset%60)
+	
+	if (minutes < 10){
+		minutes = '0' + minutes.toString()
+	}else{
+		minutes = minutes.toString()
+	}
+	
+	if (hours > 0){
+		hours = Math.floor(hours)
+		hours = '+' + hours.toString()
+	}else{
+		hours = Math.ceil(hours)
+	}
+	
+	offset = hours + ":" + minutes
+	
+	
+	var recievedData
+	var xhttp = new XMLHttpRequest();
+	xhttp.onreadystatechange = function() {
+		if (this.readyState == 4 && this.status == 200) {
+			refreshChart(JSON.parse(xhttp.responseText))
+		}
+	}
+	xhttp.open("GET", "https://bobbycounts.com/mqtt/getData.php?upperBound=" + upperBound +"&lowerBound=" + lowerBound + "&timezone=" + offset, true);
+	xhttp.send();
+}
+
+
+
+function clearData(){
+	while(myChart.data.datasets[0].data.length != 0){
+		myChart.data.datasets[0].data.pop()
+	}
+}
+
+function goLive(){
+	hourWindow = 0.1
+	clearInterval(interval)
+	interval = setInterval(sendRequestLive, 3000,.1)
+}
+
+
+
+</script>
+
+</head>
+
+
+<body onload="loadChart()" style="width:1000px">
+<div style="float:left;">
+	<canvas id="myChart" width="600px" height="600px"></canvas>
+</div>
+<div style="width:400px; height:600px; float:right; text-align:center">
+	Error Counter
+	<p id="errorDisplay"></p>
+</div>
+
+
+
+
+
+<button type="button" onclick="goLive()">Go Live Data</button>
+</body>
+</html>
