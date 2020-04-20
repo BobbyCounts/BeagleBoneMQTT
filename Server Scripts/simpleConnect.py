@@ -6,6 +6,10 @@ import json
 
 import mysql.connector
 
+#I've replaced my passwords and sensitive API endpoints with UPPERCASE_STRINGS
+#You will have to replace these with your specific endpoints and credientials 
+
+
 # The callback for when the client receives a CONNACK response from the server.
 def on_connect(client, userdata, flags, rc):
     print("Connected with result code "+str(rc))
@@ -14,12 +18,12 @@ def on_connect(client, userdata, flags, rc):
     # reconnect then subscriptions will be renewed.
     client.subscribe("test/#")
 	
-	
+#this function is specific to the email api you use, this is for zoho mail	
 def getNewToken():
 	print("Refreshing key...")
-	refreshToken = "1000.01086a40e0161b1fc604dcf1ffa421b1.8e166d4415070c2a339d530cf736b3f2"
+	refreshToken = "YOURAPITOKEN"
 	#lastRefresh = datetime.datetime.utcnow().timestamp()
-	refresh_url = "https://accounts.zoho.eu/oauth/v2/token?refresh_token=1000.01086a40e0161b1fc604dcf1ffa421b1.8e166d4415070c2a339d530cf736b3f2&grant_type=refresh_token&client_id=1000.SQE0LHNJYJQ9G4U32A8QXKQPY0P0TR&client_secret=feee9a1746741a71d135b2742ab301dfe240b38617&redirect_uri=https://zylkerapps.com/oauth2callback&scope=ZohoMail.accounts.READ,ZohoMail.messages.CREATE"
+	refresh_url = "API_REFRESH_URL"
 	refresh = requests.post(refresh_url)
 	if (refresh.status_code == 200):
 		new_access_token = json.loads(refresh.text)
@@ -43,7 +47,7 @@ def sendEmail(tempValue):
 		"askReceipt" : "no"
 	}
 	auth_header = {"Authorization" : "Zoho-oauthtoken " + access_token}
-	email_url = "https://mail.zoho.eu/api/accounts/841028000000002002/messages"
+	email_url = "API_EMAIL_URL"
 	email_post = requests.post(email_url, headers=auth_header, json=payload)
 	print("Mail sent successfully")
 	
@@ -110,8 +114,8 @@ client.on_message = on_message
 
 mydb = mysql.connector.connect(
   host="localhost",
-  user="mqttServer",
-  passwd="mariokart",
+  user="YOUR_USERNAME",
+  passwd="YOUR_PASS",
   database="mqttDatabase"
 )
 
